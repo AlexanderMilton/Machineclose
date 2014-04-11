@@ -1,0 +1,59 @@
+
+// --- DATA ---	//
+
+	datalen = 16	// Initate list length value
+	
+	data = 			// Initate data list
+	<value0>	
+	...
+	<value15>
+
+	$t0 = 0		// Initiate a temporary trash register for minor operations
+	
+	$s0 = data	// Initiate base pointer to memory (start of address list)
+	
+	$s1	= 0		// Initiate left index
+	$s2 = 1		// Initiate right index
+	
+	$s3	= 0		// Initiate left value
+	$s4 = 0		// Initiate right value
+	
+	
+// --- TEXT --- //
+
+	
+iterate:
+	
+	if (s2 >= datalen)		// If right index reaches end of list,
+		increment_index
+	
+	s3 = s1 * 4				// Multiply index by 4, to reach the responding value
+	s4 = s2 * 4				// Multiply index by 4, to reach the responding value
+	
+	if (data[s3] < data[s4])	// If the left value is less than the right value, do not swap
+		iterate					// Reloop, increment before returning (line below)
+		s2 = s1 + 1
+
+	// Swap values (using a temporary register)
+	data[t0] = data[s3]
+	data[s4] = data[s3]
+	data[s3] = data[t0]		
+	
+	iterate					// Reloop, increment before returning (line below)
+	s2 = s1 + 1
+
+increment_index:
+	
+		s1 = s1 + 1			// Increment left index
+			
+		if (s1 >= datalen)	// If left index reaches end of list, finalize
+			print
+		
+		iterate				// Return to loop, reset right index as a final operation (line below)
+		s2 = s1 + 1
+	
+print:
+	*print stuff, with newlines and shit*
+	
+exit:
+	exit dat shiet.
