@@ -23,52 +23,27 @@
             .word   0x31093c54
             .word   0x42102f37
             .word   0x00ee655b
-     
-            int1: .word 4
-            int2: .word 5
-            int3: .word 2
-            int4: .word 3
-            int5: .word 1
-           
-            linebreak: .word 10     # 10 represents the ascii character for newline
-            #msg: .asciiz ""
            
     .text
-     
+# initialization code
+
+# main loop
     main:
-     
-    initialize:
-     
-            # Store data
-            lw $t1 int1
-            lw $t2 int2
-            lw $t3 int3
-            lw $t4 int4
-            lw $t5 int5
-           
-            lw $t6 linebreak        # Store new line ascii value
-            lw $t7 counter          # Store a counter
-            #la $t msg              # Store ascii message, currently obsolete
-           
-           
+
+# exit program
     exit:
             ori $v0, $zero, 10      # Prepare syscall to exit program cleanly
             syscall                 # Bye!
-  
-           
+
+# print a newline
     newline:
-            # New line
             li $v0, 11				# Add service 11 (print character) to $v0
             move $a0, 10			# Move newline character to parameter
             syscall					# Syscall to print newline character
             jr $ra
-           
-     
-    print:  # currently obsolete
-           
-            # Print
+
+# prints content of a0
+    print_int:
             li $v0, 1               # Add service 1 (print integer) to $v0
-            move $a0, $t7           # Move value to parameter
-            syscall                 # Syscall to print parameterd values
-           
-            jr $ra
+            syscall                 # Syscall to print parameter values           
+            jr $ra			# Jump back

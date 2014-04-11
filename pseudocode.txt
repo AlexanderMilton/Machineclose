@@ -1,0 +1,21 @@
+
+
+
+left = -1
+outer:
+	left++
+	if(left == size - 2 ????) // we are at end of list
+		goto exit
+	goto inner
+
+inner:
+	left_data = data[left]
+	right = left + 1
+	right_data = data[right]
+	if(left_data < right_data) // don't swap
+		goto inner
+	data[right] = left_data // swap the data values
+	data[left] = right_data
+	if(right == size - 1) // stop loop at end of list
+		goto outer
+	goto inner // go again
