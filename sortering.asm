@@ -26,97 +26,91 @@ data:
 
 .text
 
-	#########################################################################################
-	#											#
-	#		(>^_^)>		THE GREAT REGISTER LIST		<(^_^<)			#
-	#											#
-	#	$t0	Temporary variable (unsuitable for anything but temporary operations	#
-	#	$s0	Base pointer to the data address list					#
-	#	$s1	Index of left value to compare						#
-	#	$s2	Index of right value to compare						#
-	#	$s3	Address of left value to compare					#
-	#	$s4	Address of right value to compare					#
-	#	$s5	The length of the data array						#
-	#											#
-	#		(>^_^)>		THE GREAT REGISTER LIST		<(^_^<)			#
-	#											#
-	#########################################################################################
-
+# -------- Register list ---------
+#	$t0	Temporary variable (tmp)
+#	
+#	$s0	Base pointer to the data
+#	
+#	$s1	Index of left (left)
+#	$s2	Index of right (right)
+#	
+#	$s3	Value of left (left_data)
+#	$s4	Value of right (right_data)
+#	
+#	$s5	Index of last element (length - 1)
 
 
 # initialization code
-	la $s0, data		# Load address of data array into base pointer register
-	li $s1, 0		# Initiate left index		OBSOLETE OPERATION
-	li $s2, 1		# Initiate right index
-	li $s3, 0		# Initiate left value		OBSOLETE OPERATION
-	li $s4, 0		# Initiate right value		OBSOLETE OPERATION
-	la $s5, datalen		# Initiate data length value
+init:
+	la	$s0, data		# load address of data into base pointer
+	li	$s1, 0		# initiate left to 0
+	li	$s2, 0		# initiate right to 0
+	lw	$s5, datalen 	# load length of data
+	subi	$s5, $s5, 1		# subtract one to get last index
 
-# main loop
-iterate:
-	beq $s2, $s5, print	# If the right index has reached the end of the data list we print the newly sorted value and increment the left index
-	nop			# Avoid additional operation
+# main entry point. will be run only once before handing over control to the loops
+main:
+	beq	$s5, 1, exit	# exit if list only has one item
+	# branch delay slot. row below will be performed even on branch!
+	# read data into left_data
+	sll	$t0, $s1, 2		# calculate offset (tmp = left * 4)
+	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
+	lw	$s3,($t0)		# left_data = data[left]
 	
-	mul $s3, $s1, 4		# Multiply index by 4 (bytes) to recieve an address value
-	mul $s4, $s2, 4		# Multiply index by 4 (bytes) to recieve an address value
-	
-	add $s3, $s3, $s0	# Add the data list to the value pointer, storing an address 
-	add $s4, $s4, $s0	# Add the data list to the value pointer, storing an address
-	
-	lw $s3, 0($s3)		# Load the word value stored in the register (?)
-	lw $s4, 0($s4)		# Load the word value stored in the register (?)
-	
-	blt $s3, $s4, iterate	# Reiterate if the left value is less than the right value,
-	add $s2, $s2, 1		# increment right index by 1 before jumping
-	
-# swap the left and right appointed value
-swap:
-	la $t0, 0($s3)		# Load the word stored in $s3 to a temporary register
-	la $s4, 0($s3)		# Load the word stored in $s3 to $s4
-	la $s3, 0($t0)		# Load the word stored in the temporary register to $s3
-	
-	jal iterate		# Reiterate
+	b	inner			# enter inner loop
+	# branch delay slot. row below will be performed even on branch!
 	nop
 
-# print latest sorted value
-print:
-	lw $a0, 0($s3)		# Add content of sorted value
-	li $v0, 1               # Add service 1 (print integer) to $v0
-	syscall                 # Syscall to print     
+# outer loop that uses left index
+outer:
+	# print left_data and a newline
+	move	$a0, $s3		# argument0 = left_data
+	li	$v0, 1		# v0 = 1 (print integer)
+	syscall
+	li	$a0, 10		# argument0 = 10 (ascii newline)
+	li	$v0, 11		# v0 = 11 (print character)
+	syscall
+
+	addi	$s1, $s1, 1		# ++left
+	beq	$s1, $s5, exit	# exit if left is at end of list
+	# branch delay slot. row below will be performed even on branch!
+	# read data into left_data
+	sll	$t0, $s1, 2		# calculate offset (tmp = left * 4)
+	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
+	lw	$s3,($t0)		# left_data = data[left]
 	
-	lw $a0, 10		# Add a newline character (ascii value 10)
-	li $v0, 11		# Add service 11 (print character)
-	syscall			# Syscall to print
+	b	inner			# enter inner loop
+	# branch delay slot. row below will be performed even on branch!
+	move	$s2, $s1		# right = left
+
+# inner loop that uses right index
+inner:
+	beq	$s2, $s5, outer	# exit loop if right is at end of list
+	# branch delay slot. row below will be performed even on branch!
+	addi	$s2, $s2, 1		# ++right
 	
-# increment indices 
-increment:
-	add $s1, $s1, 1		# Increment left index by 1
+	sll	$t0, $s2, 2		# calculate offset (tmp = right * 4)
+	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
+	lw	$s4,($t0)		# right_data = data[right]
 	
-	beq $s1, $s5, exit	# If the left index has reached the end of the data list, exit
-	nop			# (>^_^)> This line may be utilized to prepare operation?
+	blt	$s3, $s4, inner	# if(left_data < right_data) don't swap
+	# branch delay slot. row below will be performed even on branch!
 	
-	jal iterate		# Reiterate
-	add $s2, $s1, 1		# Reset and increment right index before jumping
+	# swap the values
+	sll	$t0, $s2, 2		# calculate offset (tmp = right * 4)
+	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
+	sw	$s3, ($t0)		# data[right] = left_data
 	
+	sll	$t0, $s1, 2		# calculate offset (tmp = left * 4)
+	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
+	sw	$s4,($t0)		# data[left] = right_data
+	
+	b	inner			# iterate
+	# branch delay slot. row below will be performed even on branch!
+	move $s3, $s4		# left_data = right_data
+	nop
+
 # exit program
 exit:
 	ori $v0, $zero, 10      # Prepare syscall to exit program cleanly
 	syscall                 # Bye!
-
-
-
-	#########################################################################################
-	#											#
-	#		(>^_^)>		THE GREAT REGISTER LIST		<(^_^<)			#
-	#											#
-	#	$t0	Temporary variable (unsuitable for anything but temporary operations	#
-	#	$s0	Base pointer to the data address list					#
-	#	$s1	Index of left value to compare						#
-	#	$s2	Index of right value to compare						#
-	#	$s3	Address of left value to compare					#
-	#	$s4	Address of right value to compare					#
-	#	$s5	The length of the data array						#
-	#											#
-	#		(>^_^)>		THE GREAT REGISTER LIST		<(^_^<)			#
-	#											#
-	#########################################################################################

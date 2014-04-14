@@ -1,27 +1,54 @@
-// selection sort
+// inversion sort
+take each value from left to right.
+iterate list rightward.
+when you find a value that is smaller swap them
 
+------
 
-left = -1 // we want to get 0 after first incrementation
-right
-left_data
-right_data
+$t0	Temporary variable (tmp)
 
+$s0	Base pointer to the data
+
+$s1	Index of left (left)
+$s2	Index of right (right)
+
+$s3	Value of left (left_data)
+$s4	Value of right (right_data)
+
+$s5	Index of last element (length - 1)
+
+-----
+
+init:
+	data = &data
+	left = 0
+	right = 0
+	last_index = length - 1
+
+// this code will run one time and then hand over control to the loops
+main:
+	if(last_index == 1) // list is one element
+		goto exit
+	left_data = data[left]
+	goto inner
 
 outer:
+	print(left_data + "\n") // left_data is now the latest value to have been sorted
 	left++
-	if(left == size - 1) // at end of list
+	if(left == last_index) // at end of list
 		goto exit
+	left_data = data[left]
 	right = left // will be incremented in loop
 	goto inner
 
 inner:
-	right++
-	if(right == size) // after end of list. stop loop
+	if(right == last_index) // already at end of list. stop loop
 		goto outer
-	left_data = data[left]
+	right++
 	right_data = data[right]
 	if(left_data < right_data) // don't swap
 		goto inner
 	data[right] = left_data // swap the data values
 	data[left] = right_data
+	left_data = right_data
 	goto inner // go again
