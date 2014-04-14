@@ -37,13 +37,13 @@
 
 # print a newline
     newline:
-            li $v0, 11				# Add service 11 (print character) to $v0
-            move $a0, 10			# Move newline character to parameter
-            syscall					# Syscall to print newline character
+            li $v0, 11			# Add service 11 (print character) to $v0
+            move $a0, 10		# Move newline character to parameter
+            syscall			# Syscall to print newline character
             jr $ra
 
 # prints content of a0
     print_int:
             li $v0, 1               # Add service 1 (print integer) to $v0
-            syscall                 # Syscall to print parameter values           
+            syscall                 # Syscall to print parameter value        
             jr $ra			# Jump back

@@ -1,21 +1,27 @@
+// selection sort
 
 
+left = -1 // we want to get 0 after first incrementation
+right
+left_data
+right_data
 
-left = -1
+
 outer:
 	left++
-	if(left == size - 2 ????) // we are at end of list
+	if(left == size - 1) // at end of list
 		goto exit
+	right = left // will be incremented in loop
 	goto inner
 
 inner:
+	right++
+	if(right == size) // after end of list. stop loop
+		goto outer
 	left_data = data[left]
-	right = left + 1
 	right_data = data[right]
 	if(left_data < right_data) // don't swap
 		goto inner
 	data[right] = left_data // swap the data values
 	data[left] = right_data
-	if(right == size - 1) // stop loop at end of list
-		goto outer
 	goto inner // go again
