@@ -2,10 +2,24 @@
     # InVertion Sorting Algorithm
      
 .data
-     
+	
+datalen2:
+	.word		0x0001
+data2:
+	.word		0x009
+	.word		0x000
+	.word		0x007
+	.word		0x001
+	.word		0x003
+	.word		0x004
+	.word		0x002
+	.word		0x006
+	.word		0x008
+	.word		0x005
+
 datalen:
 	.word   0x0010  	# 16
-	
+
 data:
 	.word   0xffff7e81
 	.word   0x00000001
@@ -27,39 +41,31 @@ data:
 .text
 
 # -------- Register list ---------
-#	$t0	Temporary variable (tmp)
-#	
-#	$s0	Base pointer to the data
-#	
 #	$s1	Index of left (left)
 #	$s2	Index of right (right)
 #	
 #	$s3	Value of left (left_data)
 #	$s4	Value of right (right_data)
+#
+#	$s5	Memory address of left_data (left_addr)
+#	$s6	Memory address of right_data (right_addr)
 #	
-#	$s5	Index of last element (length - 1)
-
-
-# initialization code
-init:
-	la	$s0, data		# load address of data into base pointer
-	li	$s1, 0		# initiate left to 0
-	li	$s2, 0		# initiate right to 0
-	lw	$s5, datalen 	# load length of data
-	subi	$s5, $s5, 1		# subtract one to get last index
+#	$s7	Index of last element (length - 1)
 
 # main entry point. will be run only once before handing over control to the loops
 main:
-	beq	$s5, 1, exit	# exit if list only has one item
-	# branch delay slot. row below will be performed even on branch!
+	li	$s1, 0		# initialise left to 0
+	li	$s2, 0		# initialise right to 0
+	lw	$s7, datalen 	# load length of data
+	subi	$s7, $s7, 1		# subtract one from length to get last index
+
 	# read data into left_data
-	sll	$t0, $s1, 2		# calculate offset (tmp = left * 4)
-	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
-	lw	$s3,($t0)		# left_data = data[left]
+	la	$s5, data		# left_addr = start of data
+	lw	$s3,($s5)		# left_data = data[left_addr]
 	
 	b	inner			# enter inner loop
 	# branch delay slot. row below will be performed even on branch!
-	nop
+	move $s6, $s5		# right_addr = left_addr
 
 # outer loop that uses left index
 outer:
@@ -71,46 +77,42 @@ outer:
 	li	$v0, 11		# v0 = 11 (print character)
 	syscall
 
-	addi	$s1, $s1, 1		# ++left
-	beq	$s1, $s5, exit	# exit if left is at end of list
+	beq	$s1, $s7, exit	# exit if left is at end of list
 	# branch delay slot. row below will be performed even on branch!
+	addi	$s1, $s1, 1		# ++left
+
 	# read data into left_data
-	sll	$t0, $s1, 2		# calculate offset (tmp = left * 4)
-	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
-	lw	$s3,($t0)		# left_data = data[left]
+	addiu	$s5, $s5, 4		# move left address pointer to next word (left_addr += 4)
+	lw	$s3,($s5)		# left_data = data[left_addr]
 	
+	move $s6, $s5		# right_addr = left_addr
 	b	inner			# enter inner loop
 	# branch delay slot. row below will be performed even on branch!
 	move	$s2, $s1		# right = left
 
 # inner loop that uses right index
 inner:
-	beq	$s2, $s5, outer	# exit loop if right is at end of list
+	beq	$s2, $s7, outer	# exit loop if right is at end of list
 	# branch delay slot. row below will be performed even on branch!
 	addi	$s2, $s2, 1		# ++right
 	
-	sll	$t0, $s2, 2		# calculate offset (tmp = right * 4)
-	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
-	lw	$s4,($t0)		# right_data = data[right]
+	addiu	$s6, $s6, 4		# move right address pointer to next word (right_addr += 4)
+	lw	$s4,($s6)		# right_data = data[right_addr]
 	
 	blt	$s3, $s4, inner	# if(left_data < right_data) don't swap
 	# branch delay slot. row below will be performed even on branch!
-	
+	nop
 	# swap the values
-	sll	$t0, $s2, 2		# calculate offset (tmp = right * 4)
-	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
-	sw	$s3, ($t0)		# data[right] = left_data
-	
-	sll	$t0, $s1, 2		# calculate offset (tmp = left * 4)
-	addu	$t0, $s0, $t0	# add base ptr and offset to get proper address
-	sw	$s4,($t0)		# data[left] = right_data
+	# right_addr is already updated above
+	sw	$s3,($s6)		# data[right_addr] = left_data
+	# left_addr has not been changed and is still correct
+	sw	$s4,($s5)		# data[left_addr] = right_data
 	
 	b	inner			# iterate
 	# branch delay slot. row below will be performed even on branch!
 	move $s3, $s4		# left_data = right_data
-	nop
 
 # exit program
 exit:
 	ori $v0, $zero, 10      # Prepare syscall to exit program cleanly
-	syscall                 # Bye!
+	syscall                 # Adios!

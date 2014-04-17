@@ -3,52 +3,50 @@ take each value from left to right.
 iterate list rightward.
 when you find a value that is smaller swap them
 
-------
-
-$t0	Temporary variable (tmp)
-
-$s0	Base pointer to the data
-
-$s1	Index of left (left)
-$s2	Index of right (right)
-
-$s3	Value of left (left_data)
-$s4	Value of right (right_data)
-
-$s5	Index of last element (length - 1)
+-------- Register list ---------
+#	$s1	Index of left (left)
+#	$s2	Index of right (right)
+#	
+#	$s3	Value of left (left_data)
+#	$s4	Value of right (right_data)
+#
+#	$s5	Memory address of left_data (left_addr)
+#	$s6	Memory address of right_data (right_addr)
+#	
+#	$s7	Index of last element (length - 1)
 
 -----
 
-init:
-	data = &data
+// this code will run one time and then hand over control to the loops
+main:
 	left = 0
 	right = 0
 	last_index = length - 1
-
-// this code will run one time and then hand over control to the loops
-main:
-	if(last_index == 1) // list is one element
-		goto exit
+	left_addr = &data
 	left_data = data[left]
+	right_addr = left_addr
 	goto inner
 
 outer:
 	print(left_data + "\n") // left_data is now the latest value to have been sorted
-	left++
 	if(left == last_index) // at end of list
 		goto exit
-	left_data = data[left]
+	++left
+	left_addr += 4
+	left_data = data[left_addr]
+	right_addr = left_addr
 	right = left // will be incremented in loop
 	goto inner
 
 inner:
 	if(right == last_index) // already at end of list. stop loop
 		goto outer
-	right++
-	right_data = data[right]
+	++right
+	right_addr += 4
+	right_data = data[right_addr]
 	if(left_data < right_data) // don't swap
 		goto inner
-	data[right] = left_data // swap the data values
-	data[left] = right_data
+	data[right_addr] = left_data // swap the data values
+	data[left_addr] = right_data
 	left_data = right_data
 	goto inner // go again
